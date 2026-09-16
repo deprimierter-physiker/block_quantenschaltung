@@ -250,7 +250,7 @@ def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarr
             measurement_results = own_simulator.measurement_all(own_simulator, state, number_of_shots)
             return state, measurement_results
 
-        return state
+    return state
 
 
      
