@@ -170,8 +170,8 @@ def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int, return_stat
     state = np.zeros([2] * qc.num_qubits, dtype=complex)
     state[0] = 1.0
     
-    def U_Gate(theta: float, phi: float, lam: float) -> np.ndarray:
-        return np.array([[np.cos(theta/2), -np.exp(1j*lam)*np.sin(theta/2)], [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(lam+phi))*np.cos(theta/2)]], dtype=complex)
+    #def U_Gate(theta: float, phi: float, lam: float) -> np.ndarray:
+    #    return np.array([[np.cos(theta/2), -np.exp(1j*lam)*np.sin(theta/2)], [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(lam+phi))*np.cos(theta/2)]], dtype=complex)
 
     for information in qc.data:
         operation = information.operation
@@ -179,12 +179,14 @@ def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int, return_stat
     
         qubit_indices = [qc.find_bit(q).index for q in information.qubits]
         if name == "u":
-            theta, phi, lam = operation.params
-            state = own_simulator.single_qubit_gate(own_simulator, U_Gate(theta, phi, lam), qubit_indices[0], qc.num_qubits, state)
+            #theta, phi, lam = operation.params
+            matrix = information.matrix
+            state = own_simulator.single_qubit_gate(own_simulator, matrix, qubit_indices[0], qc.num_qubits, state)
         if name == "cx":
             state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
         if name == "measure":
-            state = own_simulator.measurement(state, qubit_indices[0])
+            measurement_results = own_simulator.measurement(state)
+            return state, measurement_results
 
     return state
 

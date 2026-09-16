@@ -1,5 +1,6 @@
 import block_quantenschaltung as qs
 
+circ = qs.qiskit.circuit.random.random_circuit(2, 2, measure=True)
 
 def test_qc():
     test_circ = qs.qiskit.QuantumCircuit(2)
