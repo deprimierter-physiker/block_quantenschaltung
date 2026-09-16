@@ -166,12 +166,12 @@ class own_simulator:
         return copy_state
         
 def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int, return_statevector: bool):
-    qc.transpile() 
+    qc.transpile(basis_gates=["u", "cx"]) 
     state = np.zeros([2] * qc.num_qubits, dtype=complex)
     state[0] = 1.0
     
-    def Hadamad_Gate() -> np.ndarray:
-        return np.array([[1, 1], [1, -1]]) / np.sqrt(2)
+    def U_Gate(theta, phi, lam) -> np.ndarray:
+        return np.array([[np.cos(theta/2), -np.exp(1j*lam)*np.sin(theta/2)], [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(lam+phi))*np.cos(theta/2)]], dtype=complex) / np.sqrt(2)
 
     for information in qc.data:
         operation = information.operation
