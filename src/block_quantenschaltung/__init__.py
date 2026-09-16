@@ -2,7 +2,7 @@ import numpy as np
 import qiskit
 from qiskit_aer import AerSimulator
 import numpy as np
-
+"""
 def apply_cnot(state, base, change):
     N = len(state)
     copy_state = np.copy(state)
@@ -72,11 +72,7 @@ def apply_single_qubit_gate(state, gate, qubit):
     product = np.einsum(sum_string, gate, state_re)
     return np.reshape(product, -1, order="F")
 
-
-
-
-
-
+"""
 
 class mock_simulate:
     def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int, return_statevector: bool):
@@ -105,7 +101,6 @@ class simulate:
 
 class own_simulator:
     def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int):
-        self.circuit = circuit
         self.number_of_shots = number_of_shots
         self.state_vector = np.zeros([2] * self.circuit.num_qubits, dtype=complex)
 
@@ -134,5 +129,26 @@ class own_simulator:
         
         return result
     
-
+    def apply_cnot(self,state_vector, controll, target):
+        N = len(state_vector)
+        copy_state = np.copy(state_vector)
+        to_flip = []
+        to_flip_0 = []
+        k = 1
+        for i in range(N):
+            if i >= k * 2**controll:
+                to_flip.extend(range(i, i + 2**controll))
+                k += 2
+        k = 1
+        for i in range(N):
+            if i >= k * 2**target:
+                to_flip_0.extend(range(i, i + 2**target))
+                k += 2
+        print(to_flip_0, to_flip)
+        for i in to_flip:
+            if i not in to_flip_0:
+                print("change accepted")
+                copy_state[int(i + 2**target)] = state_vector[i]
+                copy_state[i] = state_vector[int(i + 2**target)]
+        return copy_state
         
