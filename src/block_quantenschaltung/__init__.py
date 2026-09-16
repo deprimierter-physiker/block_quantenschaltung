@@ -73,9 +73,7 @@ def apply_single_qubit_gate(state, gate, qubit):
 
 
 
-class own_simulator():
-    def __init__():
-        x = 0
+
 
 
 
@@ -97,7 +95,7 @@ class simulate:
         self.number_of_shots = number_of_shots
         self.return_statevector = return_statevector
     def perform_sim(self):
-        simulator = AerSimulator(method="statevector")
+        simulator = own_simulator()
         result = simulator.run(self.circuit, shots = self.number_of_shots).result()
         if self.return_statevector:
             return result.get_statevector(self.circuit)
