@@ -1,11 +1,23 @@
 import block_quantenschaltung as qs
 
-circ = qs.qiskit.circuit.random.random_circuit(2, 2, measure=True)
+#circ = qs.qiskit.circuit.random.random_circuit(2, 2, measure=True)
 
 def test_qc():
     test_circ = qs.qiskit.QuantumCircuit(2)
     test_circ.h(0)
     test_circ.cx(0, 1)
+    test_circ.save_statevector()
+
+    aer_test = qs.mock_simulate(test_circ, 1000, True)
+    own_test = qs.simulate(test_circ, 1000, True)
+
+    aer_res = aer_test.perform_sim()
+    own_res = own_test.perform_sim()
+
+    assert aer_res == own_res
+
+def test_qc_random():
+    test_circ = qs.qiskit.circuit.random.random_circuit(3, 5, measure=True)
     test_circ.save_statevector()
 
     aer_test = qs.mock_simulate(test_circ, 1000, True)
