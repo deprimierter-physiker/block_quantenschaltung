@@ -6,4 +6,6 @@ circ.cx(0, 1)
 circ.measure_all()
 
 test = qs.simulate(circ, 1000)
-print(test.perform_sim())
+res = test.perform_sim()
+
+print(res.get_counts(circ))

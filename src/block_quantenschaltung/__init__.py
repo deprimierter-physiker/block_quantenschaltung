@@ -13,3 +13,4 @@ class simulate:
         return result
     def own_simulator(self):
         return 0
+    
