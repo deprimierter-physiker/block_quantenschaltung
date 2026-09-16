@@ -195,7 +195,7 @@ def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarr
         if name == "cx":
             state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
         if name == "measure":
-            measurement_results = own_simulator.measurement(state)
+            measurement_results = own_simulator.measurement_all(state)
             return state, measurement_results
 
     return state
