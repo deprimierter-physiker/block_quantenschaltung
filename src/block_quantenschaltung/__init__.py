@@ -167,7 +167,7 @@ class own_simulator:
         return copy_state
         
 def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarray:
-    qc.transpile() 
+    qc.transpile(basis_gates = ["u", "cx"]) 
     state = np.zeros([2] * qc.num_qubits, dtype=complex)
     state[0] = 1.0
     
