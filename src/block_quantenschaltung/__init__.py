@@ -183,6 +183,8 @@ def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int, return_stat
             state = own_simulator.single_qubit_gate(own_simulator, U_Gate(theta, phi, lam), qubit_indices[0], qc.num_qubits, state)
         if name == "cx":
             state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
+        if name == "measure":
+            state = own_simulator.measurement(state, qubit_indices[0])
 
     return state
 
