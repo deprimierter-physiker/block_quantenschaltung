@@ -55,6 +55,16 @@ strings = [
     "z",
 ]
 
+def pauli_x() -> numpy.ndarray:
+    return numpy.array([[0, 1], [1, 0]], dtype=complex)
+
+
+def pauli_y() -> numpy.ndarray:
+    return numpy.array([[0, -1j], [1j, 0]], dtype=complex)
+
+
+def pauli_z() -> numpy.ndarray:
+    return numpy.array([[1, 0], [0, -1]], dtype=complex)
 
 def apply_single_qubit_gate(state, gate, qubit):
     N = np.log2(len(state))
