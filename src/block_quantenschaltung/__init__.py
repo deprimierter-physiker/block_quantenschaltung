@@ -11,4 +11,5 @@ class simulate:
         simulator = AerSimulator()
         result = simulator.run(self.circuit, shots = self.number_of_shots).result()
         return result
-        
+    def own_simulator(self):
+        return 0
