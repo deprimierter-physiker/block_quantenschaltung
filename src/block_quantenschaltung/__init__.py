@@ -1,6 +1,7 @@
 import numpy as np
 import qiskit
 from qiskit_aer import AerSimulator
+import matplotlib.pyplot as plt
 
 """
 def apply_cnot(state, base, change):
@@ -164,9 +165,18 @@ class own_simulator:
                 copy_state[int(i + 2**target)] = state_vector[i]
                 copy_state[i] = state_vector[int(i + 2**target)]
         return copy_state
+
+    def measurement_all(self, state_vector: np.ndarray) -> str:
+        N = len(state_vector)
+        probabilities = np.abs(state_vector)**2
+        probabilities /= np.sum(probabilities)
+        measurement_result = np.random.choice(range(N), p=probabilities)
+        return format(measurement_result, f"0{int(np.log2(N))}b")
+    
         
-def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int, return_statevector: bool):
-    qc.transpile(basis_gates=["u", "cx"]) 
+        
+def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarray:
+    qc.transpile(basis_gates = ["u", "cx"]) 
     state = np.zeros([2] * qc.num_qubits, dtype=complex)
     state[0] = 1.0
     
@@ -189,6 +199,13 @@ def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int, return_stat
             return state, measurement_results
 
     return state
+
+
+     
+
+
+
+
 
     
 
