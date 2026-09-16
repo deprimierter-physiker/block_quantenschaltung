@@ -163,7 +163,7 @@ class own_simulator:
                 copy_state[i] = state_vector[int(i + 2**target)]
         return copy_state
 
-    def measurement_all(self, state_vector: np.ndarray, number_of_shots: int) -> str:
+    def measurement_all(self, state_vector: np.ndarray, number_of_shots: int):
         # BUG: number_of_shots is accepted but ignored - exactly ONE sample is drawn and a
         # single bitstring returned, while the Aer reference path returns a counts dict of
         # size `shots`. The two results are structurally incomparable, so the tests can
@@ -186,7 +186,7 @@ class own_simulator:
     # BUG (contract): annotated -> np.ndarray, but returns the 2-tuple (state, measurement_results)
     # on the `measure` branch and a bare array otherwise. Callers cannot rely on the return shape.
     # FIX: pick one contract, e.g. always return (state, counts_or_None), and fix the annotation.
-    def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarray:
+    def simulation_func(self, qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarray:
         qc = qiskit.transpile(qc, basis_gates = ["u", "cx"]) 
         state = np.zeros(2**qc.num_qubits, dtype=complex)
         state[0] = 1.0
@@ -206,15 +206,15 @@ class own_simulator:
             if name == "u":
                 #theta, phi, lam = operation.params
                 matrix = operation.to_matrix()
-                state = own_simulator.single_qubit_gate(own_simulator, matrix, qubit_indices[0], qc.num_qubits, state)
+                state = own_simulator.single_qubit_gate(self, matrix, qubit_indices[0], qc.num_qubits, state)
             if name == "cx":
-                state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
+                state = own_simulator.apply_cnot(self, qubit_indices[0], qubit_indices[1], state)
             if name == "measure":
                 # BUG (semantics): returns immediately on the FIRST measure instruction, so any
                 # gates after it are skipped. measure_all() emits one `measure` per qubit, so a
                 # circuit ending in measure_all effectively measures after the first one only.
                 # Also: a real measurement should collapse the state, not leave it untouched.
-                measurement_results = own_simulator.measurement_all(own_simulator, state, number_of_shots)
+                measurement_results = own_simulator.measurement_all(self, state, number_of_shots)
                 return state, measurement_results
 
         return state
