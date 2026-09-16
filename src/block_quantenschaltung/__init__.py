@@ -124,50 +124,25 @@ class simulate:
 class own_simulator:
     def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int):
         self.circuit = circuit
-        self.number_of_shots = number_of_shots
-        self.circuit = circuit  # BUG (harmless): duplicate assignment of self.circuit
-        # BUG: dead state. Nothing ever reads self.state_vector - simulation_func() builds
-        # its own independent flat `state` array instead. The class-based and the
-        # function-based design were never merged.
+        self.number_of_shots = number_of_shots  
+        #deleted self.state_vector variable since we did not need this one here bc we define it in aour sim_func
+        """
         self.state_vector = np.zeros([2] * self.circuit.num_qubits, dtype=complex)
         self.state_vector[0] = 1
+        """
 
     def single_qubit_gate(self, gate: np.ndarray, qubit_index: int, N: int, state_vector: np.ndarray) -> np.ndarray:
 
         state_tensor = np.reshape(state_vector, (2,) * N, order='F')
+        qubit_axes = list(range(N)) #make the simulation for more then 26 qubits (before we used the alphabet)
 
-        # BUG (limit): hardcoded 26 letters -> IndexError for circuits with more than
-        # 26 qubits. FIX: generate labels programmatically, or use einsum's list-of-ints API.
-        strings = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]
+        #Makes the labeling of our simulation in sync with the other methods
+        axis = qubit_index
+        out_label = N
+        out_axes = qubit_axes.copy()
+        out_axes[axis] = out_label
 
-        qubit_string = []
-        for i in range(N):
-            qubit_string.append(strings[i])
-
-        # BUG (confirmed by experiment): the N-1-qubit_index reversal picks the WRONG axis.
-        # np.reshape(state, (2,)*N, order='F') already maps tensor axis i -> qubit i
-        # (i.e. bit i of the flat index) - the same convention apply_cnot() assumes below.
-        # So every gate lands on qubit N-1-q instead of q (only correct when q == N-1-q).
-        # FIX: letter = strings[qubit_index]
-        letter = strings[N - 1 - qubit_index]
-        indicies = "I"+letter+","
-        for i in range(len(qubit_string)):
-            indicies += qubit_string[i] 
-
-        # BUG (confirmed by experiment, separate from the one above - fixing only the
-        # `letter` line is NOT enough): the output spec always puts the new label "I" FIRST
-        # instead of back into the slot the contracted axis occupied. Every gate on a qubit
-        # other than qubit 0 therefore PERMUTES the qubit <-> bit-position mapping, and the
-        # order='F' reshape below silently bakes that permutation into the state vector,
-        # corrupting all following gates and the measurement (unphysical results).
-        # FIX: new_qubit_string = qubit_string.copy(); new_qubit_string[qubit_index] = "I"
-        new_qubit_string = [x for x in qubit_string if x != letter]
-        new_indicies = "->I"
-        for i in range(len(new_qubit_string)):
-            new_indicies += new_qubit_string[i]
-            
-        #wrong axis
-        result = np.einsum(f"{indicies+new_indicies}", gate, state_tensor)
+        result = np.einsum(gate, [out_label, axis], state_tensor, qubit_axes, out_axes)
         vec_res = np.reshape(result,-1, order='F')
         return vec_res
     
