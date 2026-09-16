@@ -18,7 +18,7 @@ qc = qiskit.QuantumCircuit(2)
 qc.h(0)
 qc.measure_all()
 
-Test = qs.simulate(qc, 1000)
+Test = qs.mock_simulate(qc, 1000, False)
 
 result = Test.perform_sim()
 

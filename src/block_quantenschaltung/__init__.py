@@ -97,7 +97,7 @@ class simulate:
         self.number_of_shots = number_of_shots
         self.return_statevector = return_statevector
     def perform_sim(self):
-        simulator = own_simulator()
+        simulator = own_simulator(self.circuit, self.number_of_shots)
         result = simulator.run(self.circuit, shots = self.number_of_shots).result()
         if self.return_statevector:
             return result.get_statevector(self.circuit)
