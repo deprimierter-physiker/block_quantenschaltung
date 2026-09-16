@@ -185,8 +185,8 @@ class own_simulator:
         
     # BUG (contract): annotated -> np.ndarray, but returns the 2-tuple (state, measurement_results)
     # on the `measure` branch and a bare array otherwise. Callers cannot rely on the return shape.
-    # FIX: pick one contract, e.g. always return (state, counts_or_None), and fix the annotation.
-    def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarray:
+    # FIX: Return list.
+    def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> list:
         qc = qiskit.transpile(qc, basis_gates = ["u", "cx"]) 
         state = np.zeros(2**qc.num_qubits, dtype=complex)
         state[0] = 1.0
@@ -215,9 +215,9 @@ class own_simulator:
                 # circuit ending in measure_all effectively measures after the first one only.
                 # Also: a real measurement should collapse the state, not leave it untouched.
                 measurement_results = own_simulator.measurement_all(own_simulator, state, number_of_shots)
-                return state, measurement_results
+                return [state, measurement_results]
 
-        return state
+        return [state, None]
 
 
      
