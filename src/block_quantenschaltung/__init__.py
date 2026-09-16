@@ -157,7 +157,7 @@ class own_simulator:
         
 def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int, return_statevector: bool):
     qc.transpile() 
-    gate_names = set(qc.count_ops().keys())
+    gates = qc.count_ops()
 
     def Hadamad_Gate() -> np.ndarray:
         return np.array([[1, 1], [1, -1]]) / np.sqrt(2)
