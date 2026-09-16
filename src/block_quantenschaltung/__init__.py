@@ -3,11 +3,7 @@ import qiskit
 from qiskit_aer import AerSimulator
 import matplotlib.pyplot as plt  # BUG (minor): imported but never used
 
-# NOTE: the large triple-quoted block below is an older draft (Pauli matrices, an earlier
-# apply_cnot / apply_single_qubit_gate). It is dead and partly broken - e.g. it calls
-# numpy.* while this module imports numpy as np, and np.reshape((2,)*N) with a float N
-# from np.log2. Keep it out of the way (or delete it) so it is not confused with the
-# live implementation further down.
+
 
 """
 def apply_cnot(state, base, change):
@@ -110,25 +106,16 @@ class simulate:
         self.number_of_shots = number_of_shots
         self.return_statevector = return_statevector
     def perform_sim(self):
-        # BUG (fatal): this mimics the AerSimulator API of mock_simulate, but own_simulator
-        # has no .run() and never produces a result object -> AttributeError before any
-        # gate math runs. The real gate loop lives in simulation_func() and is never called.
-        # FIX: return simulation_func(self.circuit, self.number_of_shots)
         simulator = own_simulator(self.circuit, self.number_of_shots)
         result = simulator.simulation_func(self.circuit, shots = self.number_of_shots).result()
         if self.return_statevector:
-            return result.get_statevector(self.circuit)
-        return result.get_counts(self.circuit)
-        #TODO: match syntax
+            return result[0]
+        return result[1]
 
 class own_simulator:
     def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int):
         self.circuit = circuit
         self.number_of_shots = number_of_shots
-        self.circuit = circuit  # BUG (harmless): duplicate assignment of self.circuit
-        # BUG: dead state. Nothing ever reads self.state_vector - simulation_func() builds
-        # its own independent flat `state` array instead. The class-based and the
-        # function-based design were never merged.
         self.state_vector = np.zeros([2] * self.circuit.num_qubits, dtype=complex)
         self.state_vector[0] = 1
 
@@ -144,29 +131,19 @@ class own_simulator:
         for i in range(N):
             qubit_string.append(strings[i])
 
-        # BUG (confirmed by experiment): the N-1-qubit_index reversal picks the WRONG axis.
-        # np.reshape(state, (2,)*N, order='F') already maps tensor axis i -> qubit i
-        # (i.e. bit i of the flat index) - the same convention apply_cnot() assumes below.
-        # So every gate lands on qubit N-1-q instead of q (only correct when q == N-1-q).
-        # FIX: letter = strings[qubit_index]
-        letter = strings[N - 1 - qubit_index]
+        letter = strings[qubit_index]
         indicies = "I"+letter+","
         for i in range(len(qubit_string)):
             indicies += qubit_string[i] 
 
-        # BUG (confirmed by experiment, separate from the one above - fixing only the
-        # `letter` line is NOT enough): the output spec always puts the new label "I" FIRST
-        # instead of back into the slot the contracted axis occupied. Every gate on a qubit
-        # other than qubit 0 therefore PERMUTES the qubit <-> bit-position mapping, and the
-        # order='F' reshape below silently bakes that permutation into the state vector,
-        # corrupting all following gates and the measurement (unphysical results).
-        # FIX: new_qubit_string = qubit_string.copy(); new_qubit_string[qubit_index] = "I"
-        new_qubit_string = [x for x in qubit_string if x != letter]
+
+        new_qubit_string = qubit_string.copy()
+        new_qubit_string[qubit_index] = "I"
         new_indicies = "->I"
         for i in range(len(new_qubit_string)):
             new_indicies += new_qubit_string[i]
             
-        #TODO:wrong axis
+
         result = np.einsum(f"{indicies+new_indicies}", gate, state_tensor)
         vec_res = np.reshape(result,-1, order='F')
         return vec_res
@@ -191,10 +168,8 @@ class own_simulator:
             if i >= k * 2**target:
                 to_flip_0.extend(range(i, i + 2**target))
                 k += 2
-        print(to_flip_0, to_flip)  # BUG (noise): leftover debug print, floods output per gate
         for i in to_flip:
             if i not in to_flip_0:
-                print("change accepted")  # BUG (noise): leftover debug print
                 copy_state[int(i + 2**target)] = state_vector[i]
                 copy_state[i] = state_vector[int(i + 2**target)]
         return copy_state
@@ -210,47 +185,50 @@ class own_simulator:
         # NOTE: this renormalisation hides loss of norm. If the gate math above is wrong the
         # state is silently rescaled here instead of failing loudly - consider asserting
         # np.isclose(np.sum(probabilities), 1) so unphysical states are caught.
+        assert np.isclose(np.sum(probabilities), 1)
         probabilities /= np.sum(probabilities)
-        measurement_result = np.random.choice(range(N), p=probabilities) #repeat N times
-        return format(measurement_result, f"0{int(np.log2(N))}b")
+        results = []
+        for k in range(number_of_shots):
+            results.append(np.random.choice(range(N), p=probabilities))
+        return results
     
         
         
-# BUG (contract): annotated -> np.ndarray, but returns the 2-tuple (state, measurement_results)
-# on the `measure` branch and a bare array otherwise. Callers cannot rely on the return shape.
-# FIX: pick one contract, e.g. always return (state, counts_or_None), and fix the annotation.
-def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarray:
-    qc = qiskit.transpile(qc, basis_gates = ["u", "cx"]) 
-    state = np.zeros(2**qc.num_qubits, dtype=complex)
-    state[0] = 1.0
-    
-    #def U_Gate(theta: float, phi: float, lam: float) -> np.ndarray:
-    #    return np.array([[np.cos(theta/2), -np.exp(1j*lam)*np.sin(theta/2)], [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(lam+phi))*np.cos(theta/2)]], dtype=complex)
+    # BUG (contract): annotated -> np.ndarray, but returns the 2-tuple (state, measurement_results)
+    # on the `measure` branch and a bare array otherwise. Callers cannot rely on the return shape.
+    # FIX: pick one contract, e.g. always return (state, counts_or_None), and fix the annotation.
+    def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarray:
+        qc = qiskit.transpile(qc, basis_gates = ["u", "cx"]) 
+        state = np.zeros(2**qc.num_qubits, dtype=complex)
+        state[0] = 1.0
+        
+        #def U_Gate(theta: float, phi: float, lam: float) -> np.ndarray:
+        #    return np.array([[np.cos(theta/2), -np.exp(1j*lam)*np.sin(theta/2)], [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(lam+phi))*np.cos(theta/2)]], dtype=complex)
 
-    for information in qc.data:
-        operation = information.operation
-        name = operation.name  
-    
-        qubit_indices = [qc.find_bit(q).index for q in information.qubits]
-        # BUG (design): the three calls below pass the CLASS own_simulator as `self` instead
-        # of an instance. It only "works" because none of these methods read self - which is
-        # the same reason self.state_vector in __init__ is dead code.
-        # FIX: make them @staticmethod, or build one instance and call the bound methods.
-        if name == "u":
-            #theta, phi, lam = operation.params
-            matrix = operation.to_matrix()
-            state = own_simulator.single_qubit_gate(own_simulator, matrix, qubit_indices[0], qc.num_qubits, state)
-        if name == "cx":
-            state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
-        if name == "measure":
-            # BUG (semantics): returns immediately on the FIRST measure instruction, so any
-            # gates after it are skipped. measure_all() emits one `measure` per qubit, so a
-            # circuit ending in measure_all effectively measures after the first one only.
-            # Also: a real measurement should collapse the state, not leave it untouched.
-            measurement_results = own_simulator.measurement_all(own_simulator, state, number_of_shots)
-            return state, measurement_results
+        for information in qc.data:
+            operation = information.operation
+            name = operation.name  
+        
+            qubit_indices = [qc.find_bit(q).index for q in information.qubits]
+            # BUG (design): the three calls below pass the CLASS own_simulator as `self` instead
+            # of an instance. It only "works" because none of these methods read self - which is
+            # the same reason self.state_vector in __init__ is dead code.
+            # FIX: make them @staticmethod, or build one instance and call the bound methods.
+            if name == "u":
+                #theta, phi, lam = operation.params
+                matrix = operation.to_matrix()
+                state = own_simulator.single_qubit_gate(own_simulator, matrix, qubit_indices[0], qc.num_qubits, state)
+            if name == "cx":
+                state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
+            if name == "measure":
+                # BUG (semantics): returns immediately on the FIRST measure instruction, so any
+                # gates after it are skipped. measure_all() emits one `measure` per qubit, so a
+                # circuit ending in measure_all effectively measures after the first one only.
+                # Also: a real measurement should collapse the state, not leave it untouched.
+                measurement_results = own_simulator.measurement_all(own_simulator, state, number_of_shots)
+                return state, measurement_results
 
-    return state
+        return state
 
 
      
