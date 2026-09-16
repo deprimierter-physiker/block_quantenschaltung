@@ -180,7 +180,7 @@ def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarr
     
         qubit_indices = [qc.find_bit(q).index for q in information.qubits]
         if name == "h":
-            state = own_simulator.single_qubit_gate(own_simulator, Hadamad_Gate(), qubit_indices[0], qc.num_qubits, state)
+            state = own_simulator.single_qubit_gate(own_simulator, U_Gate(), qubit_indices[0], qc.num_qubits, state)
         if name == "cx":
             state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
 
