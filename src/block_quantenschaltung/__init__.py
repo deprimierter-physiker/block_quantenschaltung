@@ -109,6 +109,7 @@ class simulate:
         if self.return_statevector:
             return result.get_statevector(self.circuit)
         return result.get_counts(self.circuit)
+        #TODO: match syntax
 
 class own_simulator:
     def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int):
@@ -138,10 +139,10 @@ class own_simulator:
         for i in range(len(new_qubit_string)):
             new_indicies += new_qubit_string[i]
             
-
+        #wrong axis
         result = np.einsum(f"{indicies+new_indicies}", gate, state_tensor)
-        
-        return result
+        vec_res = np.reshape(result,-1, order='F')
+        return vec_res
     
     def apply_cnot(self, controll, target, state_vector):
         N = len(state_vector)
@@ -166,18 +167,18 @@ class own_simulator:
                 copy_state[i] = state_vector[int(i + 2**target)]
         return copy_state
 
-    def measurement_all(self, state_vector: np.ndarray) -> str:
+    def measurement_all(self, state_vector: np.ndarray, number_of_shots: int) -> str:
         N = len(state_vector)
         probabilities = np.abs(state_vector)**2
         probabilities /= np.sum(probabilities)
-        measurement_result = np.random.choice(range(N), p=probabilities)
+        measurement_result = np.random.choice(range(N), p=probabilities) #repeat N times
         return format(measurement_result, f"0{int(np.log2(N))}b")
     
         
         
 def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarray:
-    qc.transpile(basis_gates = ["u", "cx"]) 
-    state = np.zeros([2] * qc.num_qubits, dtype=complex)
+    qc = qiskit.transpile(qc, basis_gates = ["u", "cx"]) 
+    state = np.zeros(2**qc.num_qubits, dtype=complex)
     state[0] = 1.0
     
     #def U_Gate(theta: float, phi: float, lam: float) -> np.ndarray:
@@ -190,12 +191,12 @@ def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> np.ndarr
         qubit_indices = [qc.find_bit(q).index for q in information.qubits]
         if name == "u":
             #theta, phi, lam = operation.params
-            matrix = information.matrix
+            matrix = operation.to_matrix()
             state = own_simulator.single_qubit_gate(own_simulator, matrix, qubit_indices[0], qc.num_qubits, state)
         if name == "cx":
             state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
         if name == "measure":
-            measurement_results = own_simulator.measurement_all(state)
+            measurement_results = own_simulator.measurement_all(own_simulator, state, number_of_shots)
             return state, measurement_results
 
     return state
