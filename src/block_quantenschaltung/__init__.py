@@ -173,6 +173,8 @@ def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int, return_stat
         if name == "cx":
             state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
 
+    return state
+
     
 
 
