@@ -1,7 +1,6 @@
+import qiskit  # type: ignore[import-untyped]
+
 import block_quantenschaltung as qs
-import qiskit
-import matplotlib.pyplot as plt
-from qiskit.visualization import plot_histogram
 
 circ = qs.qiskit.QuantumCircuit(2)
 circ.h(0)
