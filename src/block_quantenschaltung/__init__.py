@@ -105,6 +105,7 @@ class own_simulator:
         self.number_of_shots = number_of_shots
         self.circuit = circuit
         self.state_vector = np.zeros([2] * self.circuit.num_qubits, dtype=complex)
+        self.state_vector[0] = 1
 
     def single_qubit_gate(self, gate: np.ndarray, qubit_index: int, N: int) -> np.ndarray:
 
