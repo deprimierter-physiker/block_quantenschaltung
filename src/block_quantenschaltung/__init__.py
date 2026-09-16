@@ -1,7 +1,7 @@
 import numpy as np
 import qiskit
 from qiskit_aer import AerSimulator
-import numpy as np
+
 """
 def apply_cnot(state, base, change):
     N = len(state)
@@ -103,6 +103,7 @@ class own_simulator:
     def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int):
         self.circuit = circuit
         self.number_of_shots = number_of_shots
+        self.circuit = circuit
         self.state_vector = np.zeros([2] * self.circuit.num_qubits, dtype=complex)
 
     def single_qubit_gate(self, gate: np.ndarray, qubit_index: int, N: int) -> np.ndarray:
