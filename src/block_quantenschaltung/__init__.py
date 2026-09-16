@@ -117,9 +117,9 @@ class own_simulator:
         self.state_vector = np.zeros([2] * self.circuit.num_qubits, dtype=complex)
         self.state_vector[0] = 1
 
-    def single_qubit_gate(self, gate: np.ndarray, qubit_index: int, N: int) -> np.ndarray:
+    def single_qubit_gate(self, gate: np.ndarray, qubit_index: int, N: int, state_vector: np.ndarray) -> np.ndarray:
 
-        state_tensor = np.reshape(self.state_vector, (2,) * N, order='F')
+        state_tensor = np.reshape(state_vector, (2,) * N, order='F')
 
         strings = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]
 
@@ -142,9 +142,9 @@ class own_simulator:
         
         return result
     
-    def apply_cnot(self, controll, target):
-        N = len(self.state_vector)
-        copy_state = np.copy(self.state_vector)
+    def apply_cnot(self, controll, target, state_vector):
+        N = len(state_vector)
+        copy_state = np.copy(state_vector)
         to_flip = []
         to_flip_0 = []
         k = 1
@@ -161,23 +161,28 @@ class own_simulator:
         for i in to_flip:
             if i not in to_flip_0:
                 print("change accepted")
-                copy_state[int(i + 2**target)] = self.state_vector[i]
-                copy_state[i] = self.state_vector[int(i + 2**target)]
+                copy_state[int(i + 2**target)] = state_vector[i]
+                copy_state[i] = state_vector[int(i + 2**target)]
         return copy_state
         
 def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int, return_statevector: bool):
     qc.transpile() 
-    gates = qc.count_ops()
-
+    state = np.zeros([2] * qc.num_qubits, dtype=complex)
+    state[0] = 1.0
+    
     def Hadamad_Gate() -> np.ndarray:
         return np.array([[1, 1], [1, -1]]) / np.sqrt(2)
 
+    for information in qc.data:
+        operation = information.operation
+        name = operation.name  
     
-    for j in range(number_of_shots):
-        for i in gate_names:
-            if i == "h":
-                for gate in qc.data:
-                    if gate[0].name == "h":
-                        qubit_index = gate[1][0].index
-                        qc.state_vector = own_simulator.single_qubit_gate(Hadamad_Gate(), qubit_index, qc.num_qubits)
+        qubit_indices = [qc.find_bit(q).index for q in information.qubits]
+        if name == "h":
+            state = own_simulator.single_qubit_gate(own_simulator, Hadamad_Gate(), qubit_indices[0], qc.num_qubits, state)
+        if name == "cx":
+            state = own_simulator.apply_cnot(own_simulator, qubit_indices[0], qubit_indices[1], state)
+
+    
+
 
