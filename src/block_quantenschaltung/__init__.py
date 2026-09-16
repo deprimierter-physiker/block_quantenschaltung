@@ -129,7 +129,7 @@ class own_simulator:
         for i in range(N):
             qubit_string.append(strings[i])
 
-        letter = strings[qubit_index]
+        letter = strings[N - 1 - qubit_index]
         indicies = "I"+letter+","
         for i in range(len(qubit_string)):
             indicies += qubit_string[i] 
