@@ -287,7 +287,7 @@ class mock_simulate:
             qiskit.exceptions.QiskitError: If the state vector was requested but the
                 circuit contains no ``save_statevector()`` instruction.
         """
-        simulator = AerSimulator(method="statevector")
+        simulator = AerSimulator(method="statevector", fusion_enable = False, max_parallel_threads=1)
         result = simulator.run(self.circuit, shots = self.number_of_shots).result()
         if self.return_statevector:
             return result.get_statevector(self.circuit)
