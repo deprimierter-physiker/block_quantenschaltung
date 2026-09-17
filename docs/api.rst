@@ -7,6 +7,7 @@ API Reference
    :toctree: _autosummary/
 
    apply_U
+   apply_CNOT_clean
    mock_simulate
    simulate
    own_simulator

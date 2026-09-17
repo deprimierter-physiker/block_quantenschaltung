@@ -171,6 +171,48 @@ def apply_U(
     return return_state
 @njit
 def apply_CNOT_clean(control: int, target: int, state_vector: np.ndarray) -> np.ndarray:
+    """Apply a controlled-NOT gate to the state vector, compiled with :func:`numba.njit`.
+
+    A CNOT leaves every amplitude whose ``control`` bit is 0 untouched and swaps the
+    remaining ones in pairs that differ only in the ``target`` bit. This implementation
+    therefore works in two steps. First it collects the indices of the control-1 basis
+    states into ``c_1_states_idx`` and gathers their amplitudes into ``contracted_state``,
+    a half-length vector in which the control qubit no longer appears. Then it walks that
+    contracted vector in blocks and swaps each partner pair, writing the result back
+    through ``c_1_states_idx`` to recover the full-length index.
+
+    Removing the control qubit shifts every qubit above it down by one place, so the
+    target's position inside the contracted vector is ``target - 1`` when
+    ``control < target`` and ``target`` otherwise. That offset is the ``correction``
+    term, and ``contracted_target`` is the resulting index.
+
+    This is the counterpart of :meth:`own_simulator.apply_cnot`, which searches for the
+    amplitudes to swap with a list-membership test and is quadratic in the length of the
+    state vector; this version is linear and JIT-compiled, and is what
+    :meth:`own_simulator_no_einsum.simulation_func` dispatches ``cx`` instructions to.
+
+    Args:
+        control: Index of the control qubit, with qubit 0 the least significant bit of
+            the basis-state index. Must differ from ``target``.
+        target: Index of the target qubit, which is flipped wherever the control is 1.
+        state_vector: The state vector to act on, of length ``2**num_qubits``. It is not
+            modified; a new array is returned.
+
+    Returns:
+        A new state vector of the same shape as ``state_vector``, with the CNOT applied.
+
+    Note:
+        The number of qubits is recovered from ``len(state_vector)`` rather than passed
+        in, unlike :func:`apply_U`. Passing a vector whose length is not a power of two
+        therefore yields a wrong result rather than an error. Passing
+        ``control == target`` is likewise not rejected.
+
+    Example:
+        Flipping qubit 1 of :math:`|01\\rangle` (qubit 0 set) gives :math:`|11\\rangle`::
+
+            state = np.array([0, 1, 0, 0], dtype=complex)
+            apply_CNOT_clean(0, 1, state)   # -> [0, 0, 0, 1]
+    """
     return_state = np.copy(state_vector)
     num_qubits = int(np.log2(len(state_vector)))
     c_1_states_idx = []
