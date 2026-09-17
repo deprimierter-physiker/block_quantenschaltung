@@ -20,5 +20,3 @@ Dokumentation für das Paket ``block-quantenschaltung``.
    :align: center
 
    Abbildung: Runtime comparisons between single qubit and CNOT gates.
-
-
