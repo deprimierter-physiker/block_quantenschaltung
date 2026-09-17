@@ -29,6 +29,7 @@ extensions = ['sphinx.ext.autosummary','sphinx.ext.napoleon']
 autosummary_generate = True
 autodoc_member_order = 'bysource'
 autodoc_typehints = 'description'   # render the annotations into the parameter list
+add_module_names = False
 
 # -- Napoleon (Google-style docstrings) --------------------------------------
 napoleon_google_docstring = True
