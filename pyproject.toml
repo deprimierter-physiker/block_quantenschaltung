@@ -23,4 +23,5 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "sphinx>=9.1.0",
+    "sphinx-rtd-theme>=3.1.0",
 ]
