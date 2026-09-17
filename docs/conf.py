@@ -14,7 +14,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath('../src'))
 
-project = 'Block_quntenschaltung_pascal_marius'
+project = 'Block_quantenschaltung_pascal_marius'
 copyright = '2026, Pascal and Marius'
 author = 'Pascal and Marius'
 
