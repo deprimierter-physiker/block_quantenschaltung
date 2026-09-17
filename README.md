@@ -13,4 +13,4 @@ pip install git+https://github.com/deprimierter-physiker/block_quantenschaltung
 
 This work was supported by claude and copilot.
 
-![Random standard background picture. No meaning, just here to test](/playground/134331067843042107.jpg)
+![Runtime comparison between single qubit and CNOT gates.](/images/gate_benchmarkblack.png)

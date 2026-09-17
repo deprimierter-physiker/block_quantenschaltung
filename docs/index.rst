@@ -13,9 +13,9 @@ Dokumentation für das Paket ``block-quantenschaltung``.
    api
 
 
-.. figure:: /images/134335392265725369.jpg
-   :alt: Beispiel keines Quantenschaltkreises
+.. figure:: /images/gate_benchmark_dark.png
+   :alt: Runtime comparisons between single qubit and CNOT gates
    :width: 600px
    :align: center
 
-   Abbildung: Kein einfacher Quantenschaltkreis.
+   Abbildung: Runtime comparisons between single qubit and CNOT gates.
