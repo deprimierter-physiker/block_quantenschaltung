@@ -630,8 +630,8 @@ class own_simulator_no_einsum:
         """
         N = len(state_vector)
         copy_state = np.copy(state_vector)
-        to_flip = []
-        to_flip_0 = []
+        to_flip = [] #states that have a one 
+        to_flip_0 = []#control list, so we do not flip a second time 
         k = 1
         for i in range(N):
             if i >= k * 2**controll:
