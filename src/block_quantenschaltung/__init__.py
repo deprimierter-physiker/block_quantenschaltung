@@ -252,6 +252,19 @@ class own_simulator:
         return [state, None]
 
 
+
+
+class simulate_no_einsum:
+    def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int, return_statevector: bool):
+        self.circuit = circuit
+        self.number_of_shots = number_of_shots
+        self.return_statevector = return_statevector
+    def perform_sim(self):
+        result = own_simulator_no_einsum.simulation_func(self.circuit, self.number_of_shots)
+        if self.return_statevector:
+            return result[0]
+        return result[1]
+
 class own_simulator_no_einsum:
     def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int):
         self.circuit = circuit

@@ -27,7 +27,7 @@ def test_qc():
     test_circ.save_statevector()
 
     aer_test = qs.mock_simulate(test_circ, 1000, True)
-    own_test = qs.simulate(test_circ, 1000, True)
+    own_test = qs.simulate_no_einsum(test_circ, 1000, True)
 
     aer_res = aer_test.perform_sim()
     own_res = own_test.perform_sim()
@@ -48,7 +48,7 @@ def test_qc_random():
     test_circ = qs.qiskit.transpile(test_circ, basis_gates = ["u", "cx"], optimization_level=0)
     test_circ.save_statevector()
 
-    own_test = qs.simulate(test_circ, 1000, True)
+    own_test = qs.simulate_no_einsum(test_circ, 1000, True)
     aer_test = qs.mock_simulate(test_circ, 1000, True)
     aer_res = aer_test.perform_sim()
     own_res = own_test.perform_sim()
@@ -66,7 +66,7 @@ def test_counts_match_aer():
     aer_res = qs.mock_simulate(test_circ, shots, False).perform_sim()
 
     qs.np.random.seed(0)
-    own_res = qs.simulate(test_circ, shots, False).perform_sim()
+    own_res = qs.simulate_no_einsum(test_circ, shots, False).perform_sim()
 
     assert isinstance(own_res, dict)
     assert sum(own_res.values()) == shots
