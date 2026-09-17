@@ -1,0 +1,38 @@
+name: pytest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Muss zu .python-version und requires-python in pyproject.toml passen.
+  PYTHON_VERSION: "3.14"
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: uv installieren
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+
+      - name: Abhaengigkeiten installieren
+        run: uv sync
+
+      # --benchmark-skip laesst die Zeitmessungen aus: Laufzeiten auf einem
+      # geteilten CI-Runner schwanken zu stark, um aussagekraeftig zu sein, und
+      # kosten rund 40 s. Der Korrektheitstest test_backends_agree ist kein
+      # Benchmark und laeuft weiterhin mit.
+      - name: Tests ausfuehren
+        run: uv run pytest --benchmark-skip -q

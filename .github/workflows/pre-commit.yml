@@ -1,0 +1,47 @@
+name: pre-commit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Laufende Jobs abbrechen, sobald neue Commits auf denselben Branch bzw. PR kommen.
+# github.workflow ist Teil des Keys, damit dieser Workflow den pytest-Workflow nicht abbricht.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Muss zu .python-version und requires-python in pyproject.toml passen.
+  PYTHON_VERSION: "3.14"
+
+jobs:
+  pre-commit:
+    name: Hooks pruefen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: uv installieren
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+
+      # uv.lock steht in .gitignore, daher wird die Umgebung bei jedem Lauf neu
+      # aufgeloest statt aus einer eingecheckten Lockfile installiert.
+      - name: Abhaengigkeiten installieren
+        run: uv sync
+
+      # Ohne Cache werden die Hook-Umgebungen jedes Mal neu gebaut, was die
+      # Laufzeit des Jobs dominiert.
+      - name: pre-commit-Umgebungen cachen
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: pre-commit-${{ runner.os }}-py${{ env.PYTHON_VERSION }}-
+
+      - name: pre-commit ausfuehren
+        run: uv run pre-commit run --all-files --show-diff-on-failure
