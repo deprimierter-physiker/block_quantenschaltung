@@ -8,7 +8,7 @@ For more information one may read the documentation, created using sphinx.
 
 Hopefully, one can download the project via
 ```
-pip install git+https://github.com/pairinteraction/rydstate
+pip install git+https://github.com/deprimierter-physiker/block_quantenschaltung
 ```
 
 This work was supported by claude and copilot.
