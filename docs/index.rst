@@ -11,3 +11,11 @@ Dokumentation für das Paket ``block-quantenschaltung``.
 
    installation
    api
+
+
+.. figure:: /images/134335392265725369.jpg
+   :alt: Beispiel keines Quantenschaltkreises
+   :width: 600px
+   :align: center
+
+   Abbildung: Kein einfacher Quantenschaltkreis.
