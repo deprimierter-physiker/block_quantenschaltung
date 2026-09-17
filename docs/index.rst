@@ -15,5 +15,8 @@ documentation for details.
    :maxdepth: 2
    :caption: Contents:
 
-installation.rst
-api.rst
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   installation.rst
+   api.rst
