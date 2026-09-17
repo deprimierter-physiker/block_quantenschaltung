@@ -251,15 +251,6 @@ class own_simulator:
 
         return [state, None]
 
-def UGate(gate: np.ndarray, qubit_index: int, N: int, state_vector: np.ndarray) -> np.ndarray:
-
-    for right in range(len(2**(0, qubit_index))):
-        for left in range(len(0, 2**N, 2**(qubit_index+1))):
-            right_index = right + left
-            left_index =  
-
-        return np.array([0])
-
 
      
 
