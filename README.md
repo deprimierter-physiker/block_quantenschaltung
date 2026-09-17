@@ -6,6 +6,6 @@ The repository contains a python library created using uv, which can simulate qi
 The simulation can be performed via the AerSimulator, an own implementation using np.einsum and an implementation without np.einsum.
 
 Hopefully, one can download the project via
-´´´
+```
 pip install git+https://github.com/pairinteraction/rydstate
-´´´
+```
