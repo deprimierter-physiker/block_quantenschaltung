@@ -169,7 +169,7 @@ def apply_U(
             return_state[low_state_idx] = res[0]
             return_state[high_state_idx] = res[1]
     return return_state
-
+@njit
 def apply_CNOT_clean(control: int, target: int, state_vector: np.ndarray) -> np.ndarray:
     return_state = np.copy(state_vector)
     num_qubits = len(state_vector)
