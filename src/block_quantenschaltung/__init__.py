@@ -237,6 +237,81 @@ def apply_CNOT_clean(control: int, target: int, state_vector: np.ndarray) -> np.
     return return_state
 
 
+def apply_CNOT_reshape(control: int, target: int, state_vector: StateVector) -> StateVector:
+    """Apply a controlled-NOT gate by reshaping the state vector, with no Python loop.
+
+    The two other CNOT implementations locate the amplitudes to swap by iterating over
+    indices: :meth:`own_simulator.apply_cnot` does so with a list-membership test that
+    makes it quadratic, and :func:`apply_CNOT_clean` walks them linearly under
+    ``numba.njit``. This version does no index bookkeeping at all -- it lets the memory
+    layout expose the pairs and hands the whole swap to NumPy.
+
+    Writing a flat index in terms of the two qubits involved,
+
+    .. math::
+
+        i = a\\,2^{h+1} + b_h\\,2^{h} + m\\,2^{l+1} + b_l\\,2^{l} + c,
+
+    where :math:`h` and :math:`l` are the higher and lower of the two qubit positions,
+    splits it into five independent ranges. That is exactly a C-order reshape to
+    ``(above, 2, between, 2, below)``: axes 1 and 3 are the control and target bits,
+    while axes 0, 2 and 4 hold the bits the gate ignores. Selecting the control axis at
+    1 and exchanging the two halves of the target axis then applies the gate to every
+    affected amplitude in two vectorised slice assignments.
+
+    Because the reshape of a contiguous array is a view rather than a copy, the only
+    allocation is the output itself, and the swap runs at NumPy's memcpy speed.
+
+    Args:
+        control: Index of the control qubit, with qubit 0 the least significant bit of
+            the basis-state index.
+        target: Index of the target qubit, which is flipped wherever the control is 1.
+            Must differ from ``control``.
+        state_vector: The state vector to act on, of length ``2**num_qubits``. It is not
+            modified; a new array is returned.
+
+    Returns:
+        A new state vector of the same shape as ``state_vector``, with the CNOT applied.
+
+    Raises:
+        ValueError: If ``control`` equals ``target``, which is not a valid CNOT, or if
+            the state vector's length is not a power of two.
+
+    Example:
+        Flipping qubit 1 of :math:`|01\\rangle` (qubit 0 set) gives :math:`|11\\rangle`::
+
+            state = np.array([0, 1, 0, 0], dtype=complex)
+            apply_CNOT_reshape(0, 1, state)   # -> [0, 0, 0, 1]
+    """
+    if control == target:
+        raise ValueError(f"control and target must differ, both are {control}")
+
+    state = np.ascontiguousarray(state_vector, dtype=complex)
+    length = state.shape[0]
+    if length & (length - 1) or length < 4:
+        raise ValueError(f"state vector length must be a power of two and at least 4, got {length}")
+    num_qubits = length.bit_length() - 1
+
+    high, low = max(control, target), min(control, target)
+    above = 1 << (num_qubits - high - 1)   # bits above the upper qubit
+    between = 1 << (high - low - 1)        # bits strictly between the two qubits
+    below = 1 << low                       # bits below the lower qubit
+
+    view = state.reshape(above, 2, between, 2, below)
+    result = view.copy()
+
+    if control > target:
+        # Control is axis 1, target is axis 3: swap the target halves where control is 1.
+        result[:, 1, :, 0, :] = view[:, 1, :, 1, :]
+        result[:, 1, :, 1, :] = view[:, 1, :, 0, :]
+    else:
+        # Control is axis 3, target is axis 1: swap the target halves where control is 1.
+        result[:, 0, :, 1, :] = view[:, 1, :, 1, :]
+        result[:, 1, :, 1, :] = view[:, 0, :, 1, :]
+
+    return result.reshape(-1)
+
+
 class mock_simulate:
     """Run a circuit on Qiskit Aer's state-vector simulator.
 

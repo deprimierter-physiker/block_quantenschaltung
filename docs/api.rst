@@ -8,6 +8,7 @@ API Reference
 
    apply_U
    apply_CNOT_clean
+   apply_CNOT_reshape
    mock_simulate
    simulate
    own_simulator
