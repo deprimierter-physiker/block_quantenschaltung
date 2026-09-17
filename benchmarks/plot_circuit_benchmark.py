@@ -36,9 +36,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Sets OMP_NUM_THREADS and friends to 1 before NumPy is imported anywhere.
-from plot_gate_benchmark import PALETTE, THEME, measure, place_labels  # noqa: E402
+from plot_gate_benchmark import PALETTE, THEME, place_labels  # noqa: E402
 
 import json  # noqa: E402
+import time  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 import matplotlib.pyplot as plt  # noqa: E402
@@ -48,7 +49,7 @@ import qiskit  # noqa: E402
 import block_quantenschaltung as qs  # noqa: E402
 
 #: Register sizes. Aer and the numba back end are measured across the whole range.
-QUBITS = [4, 6, 8, 10, 12, 14, 16]
+QUBITS = [4, 6, 8, 10, 12, 14, 16, 18, 20]
 
 #: The einsum back end applies CNOTs with a quadratic algorithm, so it is cut off early:
 #: at 14 qubits a single circuit already takes the better part of a minute.
@@ -61,10 +62,14 @@ DEPTH = 10
 SEED = 7
 
 #: Series label -> (front-end class, register sizes, palette slot).
+#:
+#: The labels name what each back end actually does. Calling :class:`simulate` "einsum"
+#: would be actively misleading: its einsum kernel is the fast half, and what dominates
+#: its runtime is the original quadratic CNOT it also uses.
 BACKENDS = {
     "Qiskit Aer": (qs.mock_simulate, QUBITS, "loop"),
-    "einsum": (qs.simulate, QUBITS_EINSUM, "numpy"),
-    "numba": (qs.simulate_no_einsum, QUBITS, "numba"),
+    "einsum + original CNOT": (qs.simulate, QUBITS_EINSUM, "numpy"),
+    "numba kernels": (qs.simulate_no_einsum, QUBITS, "numba"),
 }
 
 
@@ -106,6 +111,34 @@ def states_agree(first: np.ndarray, second: np.ndarray) -> bool:
     return bool(np.allclose(a, b * np.conj(phase / abs(phase)), atol=1e-8, rtol=1e-5))
 
 
+def measure_circuit(simulator, budget: float = 1.0, ceiling: int = 20) -> float:
+    """Time one full circuit simulation, in milliseconds, as the best of several runs.
+
+    A separate warm-up call is unnecessary here: :func:`collect` has already run the
+    simulator once to compare its state against the reference, which primes the caches
+    and forces any numba compilation. At 20 qubits a single circuit takes minutes, so
+    the repeat count is allowed to fall to one -- unlike in the gate benchmark, where
+    the kernels are cheap enough to always repeat.
+
+    Args:
+        simulator: A front-end instance with a ``perform_sim()`` method.
+        budget: Roughly how many seconds the whole measurement may take.
+        ceiling: Upper bound on the number of repetitions.
+
+    Returns:
+        The fastest observed run in milliseconds.
+    """
+    start = time.perf_counter()
+    simulator.perform_sim()
+    best = time.perf_counter() - start
+
+    for _ in range(int(np.clip(budget / max(best, 1e-9), 1, ceiling))):
+        start = time.perf_counter()
+        simulator.perform_sim()
+        best = min(best, time.perf_counter() - start)
+    return best * 1e3
+
+
 def collect() -> dict[str, tuple[list[int], list[float]]]:
     """Time every back end over the register sizes, checking they agree first.
 
@@ -130,7 +163,7 @@ def collect() -> dict[str, tuple[list[int], list[float]]]:
             elif not states_agree(reference, state):
                 raise AssertionError(f"{label} disagrees with the reference at {n} qubits")
 
-            elapsed = measure(lambda: simulator.perform_sim())
+            elapsed = measure_circuit(simulator)
             series[label][0].append(n)
             series[label][1].append(elapsed)
             print(f"  {label:12} {n:2d} qubits  {instructions:4d} instructions  "
@@ -215,10 +248,11 @@ def draw(series: dict[str, tuple[list[int], list[float]]], mode: str, destinatio
                     x=0.008, ha="left", y=0.975)
     figure.text(0.008, 0.918,
                 f"Random circuits, depth {DEPTH}, seed {SEED}, transpiled to u/cx. Log scale, "
-                "single-threaded; einsum stops at 12 qubits because its CNOT is quadratic.",
+                "single-threaded; the einsum back end stops at 12 qubits, where its quadratic "
+                "CNOT already costs 6 s per circuit.",
                 color=ink["secondary"], fontsize=9, ha="left")
 
-    figure.tight_layout(rect=(0, 0, 0.90, 0.885))
+    figure.tight_layout(rect=(0, 0, 0.855, 0.885))
     figure.savefig(destination, dpi=200, facecolor=ink["surface"])
     plt.close(figure)
     print(f"wrote {destination}", flush=True)
