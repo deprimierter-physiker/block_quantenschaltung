@@ -54,7 +54,7 @@ html_static_path = ['_static']
 extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
-    'nbsphinx',
+    'myst_nb',
 ]
 
-nbsphinx_execute = 'never'
+nb_execution_mode = "off"
