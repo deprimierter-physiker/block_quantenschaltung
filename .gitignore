@@ -3,4 +3,4 @@ __pycache__/
 .venv/
 uv.lock
 _build/
- _autosummary/
+_autosummary/
