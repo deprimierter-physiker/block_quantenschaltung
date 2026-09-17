@@ -86,6 +86,20 @@ def apply_single_qubit_gate(state, gate, qubit):
 
 """
 
+def apply_U(matrix: np.ndarray, qubit_index: int, num_qubits: int, state: np.ndarray) -> np.ndarray:
+    return_state = np.copy(state)
+    for left in range(0, 2**num_qubits, 2**(qubit_index+1)):
+        for right in range(2**qubit_index):
+            low_state_idx = left+right
+            high_state_idx = low_state_idx + 2**qubit_index
+            small_vec = np.array([state[low_state_idx], state[high_state_idx]])
+            res = np.dot(matrix, small_vec)
+            return_state[low_state_idx] = res[0]
+            return_state[high_state_idx] = res[1]
+    return return_state
+
+
+
 class mock_simulate:
     def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int, return_statevector: bool):
         self.circuit = circuit

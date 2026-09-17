@@ -2,3 +2,5 @@ local/
 __pycache__/
 .venv/
 uv.lock
+_build/
+ _autosummary/
