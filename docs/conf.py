@@ -47,3 +47,14 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+
+
+# Include notebooks
+extensions = [
+    'sphinx.ext.autosummary',
+    'sphinx.ext.napoleon',
+    'nbsphinx',
+]
+
+nbsphinx_execute = 'never'

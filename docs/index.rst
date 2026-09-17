@@ -19,3 +19,12 @@ Dokumentation für das Paket ``block-quantenschaltung``.
    :align: center
 
    Abbildung: Runtime comparisons between single qubit and CNOT gates.
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Inhalte:
+
+   installation
+   api
+   notebooks/test_jnb
