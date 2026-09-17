@@ -1,5 +1,9 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+# Generated Sphinx output is not source: it is rewritten by every `make html`,
+# so letting the whitespace hooks "fix" it would fail CI again on the next build.
+exclude: '^docs/_build/'
+
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
