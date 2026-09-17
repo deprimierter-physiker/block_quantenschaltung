@@ -223,7 +223,7 @@ def apply_CNOT_clean(control: int, target: int, state_vector: np.ndarray) -> np.
     correction = 0
     if control < target:
         correction = 1
-    contracted_target = target - correction 
+    contracted_target = target - correction
     for left in range(0, len(contracted_state), 2**(contracted_target+1)):
             for right in range(2**contracted_target):
                 low_state_idx = left + right
@@ -442,7 +442,7 @@ class own_simulator:
         self.circuit = circuit
         # NOTE (dead state): neither self.circuit nor self.number_of_shots is ever read -
         # simulation_func takes the circuit and the shot count as arguments instead.
-        self.number_of_shots = number_of_shots  
+        self.number_of_shots = number_of_shots
         #deleted self.state_vector variable since we did not need this one here bc we define it in aour sim_func
         """
         self.state_vector = np.zeros([2] * self.circuit.num_qubits, dtype=complex)
@@ -605,17 +605,17 @@ class own_simulator:
 
         # optimization_level=0 is required: from level 2 on, transpile() elides SWAP gates into a
         # final qubit permutation stored in qc.layout, which would silently permute the state.
-        qc = qiskit.transpile(qc, basis_gates = ["u", "cx"], optimization_level=0) 
+        qc = qiskit.transpile(qc, basis_gates = ["u", "cx"], optimization_level=0)
         state = np.zeros(2**qc.num_qubits, dtype=complex)
         state[0] = 1.0
-        
+
         #def U_Gate(theta: float, phi: float, lam: float) -> np.ndarray:
         #    return np.array([[np.cos(theta/2), -np.exp(1j*lam)*np.sin(theta/2)], [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(lam+phi))*np.cos(theta/2)]], dtype=complex)
 
         for information in qc.data:
             operation = information.operation
-            name = operation.name  
-        
+            name = operation.name
+
             qubit_indices = [qc.find_bit(q).index for q in information.qubits]
 
             if name == "u":
@@ -712,7 +712,7 @@ class own_simulator_no_einsum:
         self.circuit = circuit
         # NOTE (dead state): neither self.circuit nor self.number_of_shots is ever read -
         # simulation_func takes the circuit and the shot count as arguments instead.
-        self.number_of_shots = number_of_shots  
+        self.number_of_shots = number_of_shots
         #deleted self.state_vector variable since we did not need this one here bc we define it in aour sim_func
         """
         self.state_vector = np.zeros([2] * self.circuit.num_qubits, dtype=complex)
@@ -771,8 +771,8 @@ class own_simulator_no_einsum:
         """
         N = len(state_vector)
         copy_state = np.copy(state_vector)
-        to_flip = [] #states that have a one 
-        to_flip_0 = []#control list, so we do not flip a second time 
+        to_flip = [] #states that have a one
+        to_flip_0 = []#control list, so we do not flip a second time
         k = 1
         for i in range(N):
             if i >= k * 2**controll:
@@ -861,17 +861,17 @@ class own_simulator_no_einsum:
 
         # optimization_level=0 is required: from level 2 on, transpile() elides SWAP gates into a
         # final qubit permutation stored in qc.layout, which would silently permute the state.
-        qc = qiskit.transpile(qc, basis_gates = ["u", "cx"], optimization_level=0) 
+        qc = qiskit.transpile(qc, basis_gates = ["u", "cx"], optimization_level=0)
         state = np.zeros(2**qc.num_qubits, dtype=complex)
         state[0] = 1.0
-        
+
         #def U_Gate(theta: float, phi: float, lam: float) -> np.ndarray:
         #    return np.array([[np.cos(theta/2), -np.exp(1j*lam)*np.sin(theta/2)], [np.exp(1j*phi)*np.sin(theta/2), np.exp(1j*(lam+phi))*np.cos(theta/2)]], dtype=complex)
 
         for information in qc.data:
             operation = information.operation
-            name = operation.name  
-        
+            name = operation.name
+
             qubit_indices = [qc.find_bit(q).index for q in information.qubits]
 
             if name == "u":
