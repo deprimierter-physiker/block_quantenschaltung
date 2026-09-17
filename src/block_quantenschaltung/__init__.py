@@ -1,7 +1,6 @@
 import numpy as np
 import qiskit
 from qiskit_aer import AerSimulator
-import matplotlib.pyplot as plt  # BUG (minor): imported but never used
 
 
 
@@ -106,8 +105,7 @@ class simulate:
         self.number_of_shots = number_of_shots
         self.return_statevector = return_statevector
     def perform_sim(self):
-        simulator = own_simulator(self.circuit, self.number_of_shots)
-        result = simulator.simulation_func(self.circuit, shots = self.number_of_shots).result()
+        result = own_simulator.simulation_func(self.circuit, self.number_of_shots)
         if self.return_statevector:
             return result[0]
         return result[1]
@@ -115,6 +113,8 @@ class simulate:
 class own_simulator:
     def __init__(self, circuit: qiskit.QuantumCircuit, number_of_shots: int):
         self.circuit = circuit
+        # NOTE (dead state): neither self.circuit nor self.number_of_shots is ever read -
+        # simulation_func takes the circuit and the shot count as arguments instead.
         self.number_of_shots = number_of_shots  
         #deleted self.state_vector variable since we did not need this one here bc we define it in aour sim_func
         """
@@ -122,7 +122,8 @@ class own_simulator:
         self.state_vector[0] = 1
         """
 
-    def single_qubit_gate(self, gate: np.ndarray, qubit_index: int, N: int, state_vector: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def single_qubit_gate(gate: np.ndarray, qubit_index: int, N: int, state_vector: np.ndarray) -> np.ndarray:
 
         state_tensor = np.reshape(state_vector, (2,) * N, order='F')
         qubit_axes = list(range(N)) #make the simulation for more then 26 qubits (before we used the alphabet)
@@ -137,12 +138,8 @@ class own_simulator:
         vec_res = np.reshape(result,-1, order='F')
         return vec_res
     
-    def apply_cnot(self, controll, target, state_vector):
-        # NOTE (checked, NOT a bug): the k / k += 2 threshold loops below look like a
-        # fragile reimplementation of "is bit b of i set", but they do produce the same
-        # index sets as (i >> b) & 1, and the swap is a correct CNOT. Obscure and O(N^2)
-        # because of the `i not in to_flip_0` membership test, but correct - don't chase it.
-        # (`controll` is a typo for `control`.)
+    @staticmethod
+    def apply_cnot(controll, target, state_vector):
         N = len(state_vector)
         copy_state = np.copy(state_vector)
         to_flip = []
@@ -163,31 +160,51 @@ class own_simulator:
                 copy_state[i] = state_vector[int(i + 2**target)]
         return copy_state
 
-    def measurement_all(self, state_vector: np.ndarray, number_of_shots: int):
-        # BUG: number_of_shots is accepted but ignored - exactly ONE sample is drawn and a
-        # single bitstring returned, while the Aer reference path returns a counts dict of
-        # size `shots`. The two results are structurally incomparable, so the tests can
-        # never pass for the counts case even once the gate math is fixed.
-        # FIX: sample number_of_shots times and tally into a dict[str, int] like get_counts().
+    @staticmethod
+    def measurement_all(state_vector: np.ndarray, number_of_shots: int) -> dict[str, int]:
+        """Sample the state `number_of_shots` times and tally the outcomes.
+
+        The return value has the same structure as Aer's ``result.get_counts()``: keys are
+        zero-padded bitstrings with qubit 0 as the RIGHTMOST character (Qiskit's little-endian
+        convention, which is also the convention used by single_qubit_gate and apply_cnot),
+        values are how often that outcome was drawn. Outcomes that never occurred are left
+        out, exactly as Aer does.
+        """
         N = len(state_vector)
+        number_of_qubits = N.bit_length() - 1  # N is 2**number_of_qubits
+
         probabilities = np.abs(state_vector)**2
-        # NOTE: this renormalisation hides loss of norm. If the gate math above is wrong the
-        # state is silently rescaled here instead of failing loudly - consider asserting
-        # np.isclose(np.sum(probabilities), 1) so unphysical states are caught.
-        assert np.isclose(np.sum(probabilities), 1)
-        probabilities /= np.sum(probabilities)
-        results = []
-        for k in range(number_of_shots):
-            results.append(np.random.choice(range(N), p=probabilities))
-        return results
+
+        # An explicit raise rather than `assert`: asserts are stripped by `python -O`, and then
+        # the renormalisation below would silently rescale an unphysical state instead of
+        # reporting that the gates lost norm.
+        norm = np.sum(probabilities)
+        if not np.isclose(norm, 1):
+            raise ValueError(f"state vector is not normalised: sum(|amplitude|**2) = {norm}")
+        probabilities /= norm
+
+        # One vectorised draw instead of a python loop over the shots.
+        samples = np.random.choice(N, size=number_of_shots, p=probabilities)
+        indices, occurrences = np.unique(samples, return_counts=True)
+        return {
+            format(int(index), f"0{number_of_qubits}b"): int(count)
+            for index, count in zip(indices, occurrences)
+        }
     
         
         
-    # BUG (contract): annotated -> np.ndarray, but returns the 2-tuple (state, measurement_results)
-    # on the `measure` branch and a bare array otherwise. Callers cannot rely on the return shape.
-    # FIX: Return list.
+    @staticmethod
     def simulation_func(qc: qiskit.QuantumCircuit, number_of_shots: int) -> list:
-        qc = qiskit.transpile(qc, basis_gates = ["u", "cx"]) 
+        # Aer's save_* instructions (save_statevector, save_probabilities, ...) are markers for
+        # the Aer backend, not gates, and transpile() cannot translate them into the u/cx basis -
+        # it raises TranspilerError at EVERY optimization level. Drop them: this simulator hands
+        # the state back directly, so it does not need them.
+        qc = qc.copy()
+        qc.data = [datum for datum in qc.data if not datum.operation.name.startswith("save_")]
+
+        # optimization_level=0 is required: from level 2 on, transpile() elides SWAP gates into a
+        # final qubit permutation stored in qc.layout, which would silently permute the state.
+        qc = qiskit.transpile(qc, basis_gates = ["u", "cx"], optimization_level=0) 
         state = np.zeros(2**qc.num_qubits, dtype=complex)
         state[0] = 1.0
         
@@ -199,23 +216,25 @@ class own_simulator:
             name = operation.name  
         
             qubit_indices = [qc.find_bit(q).index for q in information.qubits]
-            # BUG (design): the three calls below pass the CLASS own_simulator as `self` instead
-            # of an instance. It only "works" because none of these methods read self - which is
-            # the same reason self.state_vector in __init__ is dead code.
-            # FIX: make them @staticmethod, or build one instance and call the bound methods.
+
             if name == "u":
                 #theta, phi, lam = operation.params
                 matrix = operation.to_matrix()
-                state = own_simulator.single_qubit_gate(self, matrix, qubit_indices[0], qc.num_qubits, state)
-            if name == "cx":
-                state = own_simulator.apply_cnot(self, qubit_indices[0], qubit_indices[1], state)
-            if name == "measure":
-                # BUG (semantics): returns immediately on the FIRST measure instruction, so any
-                # gates after it are skipped. measure_all() emits one `measure` per qubit, so a
-                # circuit ending in measure_all effectively measures after the first one only.
-                # Also: a real measurement should collapse the state, not leave it untouched.
-                measurement_results = own_simulator.measurement_all(own_simulator, state, number_of_shots)
+                state = own_simulator.single_qubit_gate(matrix, qubit_indices[0], qc.num_qubits, state)
+            elif name == "cx":
+                state = own_simulator.apply_cnot(qubit_indices[0], qubit_indices[1], state)
+            elif name == "measure":
+                measurement_results = own_simulator.measurement_all(state, number_of_shots)
                 return [state, measurement_results]
+            elif name in ("barrier", "delay"):
+                # Not physical operations - nothing to apply. measure_all() inserts a barrier,
+                # so without this branch every measured circuit printed "ERROR: Unkown Gate".
+                continue
+            else:
+                # NOTE: printing and carrying on means an unsupported instruction silently
+                # produces a wrong state. Consider raising instead:
+                #     raise NotImplementedError(f"gate not supported: {name}")
+                print(f"ERROR: Unknown gate: {name}")
 
         return [state, None]
 

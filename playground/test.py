@@ -21,4 +21,7 @@ Test = qs.mock_simulate(qc, 1000, False)
 
 result = Test.perform_sim()
 
+# BUG: crashes with AttributeError: 'Counts' object has no attribute 'get_counts'.
+# perform_sim() already returned the counts dict (return_statevector=False above), so this
+# should just be print(result) - as it correctly is for `res` a few lines up.
 print(result.get_counts(qc))
