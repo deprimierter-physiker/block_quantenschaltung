@@ -169,6 +169,24 @@ def apply_U(
             return_state[high_state_idx] = res[1]
     return return_state
 
+def apply_CNOT_clean(control: int, target: int, state_vector: np.ndarray) -> np.ndarray:
+    return_state = np.copy(state_vector)
+    num_qubits = len(state_vector)
+    c_1_states_idx = []
+    for left in range(0, 2**num_qubits, 2**(control+1)):
+        for right in range(2**control):
+            c_1_states_idx.append(left+right+ 2**control)
+    contracted_state = np.array([state_vector[i] for i in c_1_states_idx])
+    correction = 0
+    if control < target:
+        correction = 1
+    for left in range(0, len(contracted_state), 2**(target-correction+1)):
+            for right in range(2**target-correction):
+                low_state_idx = left+right
+                high_state_idx = low_state_idx + 2**(target-correction)
+                return_state[low_state_idx + 2**control] = contracted_state[high_state_idx]
+                return_state[high_state_idx + 2**control] = contracted_state[low_state_idx]
+    return return_state
 
 
 class mock_simulate:
