@@ -12,6 +12,10 @@ Colour encodes the *approach* rather than the individual function, so the same h
 means the same thing in both panels: blue for the NumPy-vectorised kernel, orange for
 the numba-compiled one, aqua for the original Python loop.
 
+Every numerical backend is pinned to a single thread (see :data:`THREAD_VARIABLES`),
+so the figures report the cost of the kernels themselves rather than how many cores
+happened to be idle.
+
 Run it with::
 
     uv run python benchmarks/plot_gate_benchmark.py
@@ -21,19 +25,41 @@ It writes ``gate_benchmark_light.png`` and ``gate_benchmark_dark.png`` next to i
 
 from __future__ import annotations
 
-import json
-import sys
-import time
-from pathlib import Path
+import os
 
-import matplotlib
+#: Thread-count variables for every backend NumPy, numba or a BLAS build might consult.
+#: They must be set before NumPy is imported: the thread pools are sized once at import
+#: time and ignore later changes to the environment.
+#:
+#: ``numpy.einsum`` is called without ``optimize=``, so it runs NumPy's own C loop and is
+#: single-threaded regardless. Pinning the pools still matters: it stops a threaded BLAS
+#: build from making some other kernel look artificially good, and it makes the numbers
+#: reproducible on machines with a different core count.
+THREAD_VARIABLES = (
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+    "VECLIB_MAXIMUM_THREADS",
+    "NUMBA_NUM_THREADS",
+)
+
+for _variable in THREAD_VARIABLES:
+    os.environ[_variable] = "1"
+
+import json  # noqa: E402  - imports must follow the environment setup above
+import sys  # noqa: E402
+import time  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import matplotlib  # noqa: E402
 
 matplotlib.use("Agg")  # No display in CI or a headless shell.
 
-import matplotlib.pyplot as plt
-import numpy as np
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
 
-import block_quantenschaltung as qs
+import block_quantenschaltung as qs  # noqa: E402
 
 #: Register sizes for the kernels that scale linearly.
 QUBITS = list(range(4, 21, 2))
@@ -234,7 +260,7 @@ def draw(series: dict[str, tuple[list[int], list[float]]], mode: str, destinatio
     figure.suptitle("Gate kernel scaling", color=ink["primary"], fontsize=14,
                     x=0.008, ha="left", y=0.975)
     figure.text(0.008, 0.918,
-                "Lower is better. Log scale; the original CNOT stops at 14 qubits because it is quadratic.",
+                "Lower is better. Log scale, single-threaded; the original CNOT stops at 14 qubits because it is quadratic.",
                 color=ink["secondary"], fontsize=9, ha="left")
 
     # The direct labels live outside the axes, where tight_layout cannot see them,
