@@ -174,7 +174,6 @@ class own_simulator:
         number_of_qubits = N.bit_length() - 1  # N is 2**number_of_qubits
 
         probabilities = np.abs(state_vector)**2
-
         # An explicit raise rather than `assert`: asserts are stripped by `python -O`, and then
         # the renormalisation below would silently rescale an unphysical state instead of
         # reporting that the gates lost norm.
@@ -237,6 +236,15 @@ class own_simulator:
                 print(f"ERROR: Unknown gate: {name}")
 
         return [state, None]
+
+def UGate(gate: np.ndarray, qubit_index: int, N: int, state_vector: np.ndarray) -> np.ndarray:
+
+    for right in range(len(2**(0, qubit_index))):
+        for left in range(len(0, 2**N, 2**(qubit_index+1))):
+            right_index = right + left
+            left_index =  
+
+        return np.array([0])
 
 
      
