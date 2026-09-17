@@ -172,7 +172,7 @@ def apply_U(
 @njit
 def apply_CNOT_clean(control: int, target: int, state_vector: np.ndarray) -> np.ndarray:
     return_state = np.copy(state_vector)
-    num_qubits = len(state_vector)
+    num_qubits = int(np.log2(len(state_vector)))
     c_1_states_idx = []
     for left in range(0, 2**num_qubits, 2**(control+1)):
         for right in range(2**control):
@@ -181,12 +181,17 @@ def apply_CNOT_clean(control: int, target: int, state_vector: np.ndarray) -> np.
     correction = 0
     if control < target:
         correction = 1
-    for left in range(0, len(contracted_state), 2**(target-correction+1)):
-            for right in range(2**target-correction):
-                low_state_idx = left+right
-                high_state_idx = low_state_idx + 2**(target-correction)
-                return_state[low_state_idx + 2**control] = contracted_state[high_state_idx]
-                return_state[high_state_idx + 2**control] = contracted_state[low_state_idx]
+    contracted_target = target - correction 
+    for left in range(0, len(contracted_state), 2**(contracted_target+1)):
+            for right in range(2**contracted_target):
+                low_state_idx = left + right
+                high_state_idx = low_state_idx + 2**contracted_target
+
+                low_state_index = c_1_states_idx[low_state_idx]
+                high_state_index = c_1_states_idx[high_state_idx]
+
+                return_state[low_state_index] = contracted_state[high_state_idx]
+                return_state[high_state_index] = contracted_state[low_state_idx]
     return return_state
 
 
@@ -757,7 +762,7 @@ class own_simulator_no_einsum:
                 matrix = operation.to_matrix()
                 state = apply_U(matrix, qubit_indices[0], qc.num_qubits, state)
             elif name == "cx":
-                state = own_simulator.apply_cnot(qubit_indices[0], qubit_indices[1], state)
+                state = apply_CNOT_clean(qubit_indices[0], qubit_indices[1], state)
             elif name == "measure":
                 measurement_results = own_simulator.measurement_all(state, number_of_shots)
                 return [state, measurement_results]
