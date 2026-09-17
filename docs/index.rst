@@ -1,22 +1,13 @@
-.. Block_quntenschaltung_pascal_marius documentation master file, created by
-   sphinx-quickstart on Thu Sep 17 10:00:46 2026.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. Block Quantenschaltung documentation master file.
 
-Block_quntenschaltung_pascal_marius documentation
-=================================================
+Block Quantenschaltung
+======================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
+Dokumentation für das Paket ``block-quantenschaltung``.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Inhalte:
 
-.. toctree::
-   :maxdepth: 2
-   :hidden:
-   installation.rst
-   api.rst
+   installation
+   api
