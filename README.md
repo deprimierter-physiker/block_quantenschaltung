@@ -13,4 +13,4 @@ pip install git+https://github.com/deprimierter-physiker/block_quantenschaltung
 
 This work was supported by claude and copilot.
 
-![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](/playground/134331067843042107.jpg)
+![Random standard background picture. No meaning, just here to test](/playground/134331067843042107.jpg)
