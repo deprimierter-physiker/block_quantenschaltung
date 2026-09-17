@@ -37,6 +37,7 @@ import numpy as np
 import numpy.typing as npt
 import qiskit  # type: ignore[import-untyped]
 from qiskit_aer import AerSimulator  # type: ignore[import-untyped]
+from numba import njit
 
 #: A flat, little-endian state vector of complex amplitudes, of length ``2**num_qubits``.
 StateVector = npt.NDArray[np.complex128]
@@ -127,7 +128,7 @@ def apply_single_qubit_gate(state, gate, qubit):
 
 """
 
-
+@njit
 def apply_U(
     matrix: npt.NDArray[np.complex128],
     qubit_index: int,
