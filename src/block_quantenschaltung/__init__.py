@@ -312,6 +312,46 @@ def apply_CNOT_reshape(control: int, target: int, state_vector: StateVector) -> 
     return result.reshape(-1)
 
 
+#Gate fusion
+def operations_on_qubit(circuit, qubit_index) -> qiskit.QuantumCircuit:
+    #get all operations on a particular qubit
+    qubit = circuit.qubits[qubit_index]
+    all_operations = qiskit.QuantumCircuit(1)
+    for instruction in circuit.data:
+        if qubit in instruction.qubits:
+            all_operations.append(instruction)
+    return all_operations
+
+def merge_single_qubit_gates(gate1: qiskit.QuantumCircuit.data, gate2: qiskit.QuantumCircuit.data) -> qiskit.QuantumCircuit.data:
+    #merge two subsequent single qubit gates
+    combined = qiskit.quantum_info.Operator(gate2).compose(qiskit.quantum_info.Operator(gate1))
+    fused_gate = qiskit.circuit.library.UnitaryGate(
+    combined.data,
+    label="u",
+)
+    return fused_gate
+
+def single_qubit_gate_fusion(circuit: qiskit.QuantumCircuit) -> qiskit.QuantumCircuit:
+    #perform fusion of all subsequent single qubit gates
+    N = circuit.num_qubits
+    new_circuit = qiskit.QuantumCircuit(N) 
+    prior_gate = 0
+    for qubit in range(N):
+        all_ops = operations_on_qubit(circuit, qubit)
+        for gate_idx in range(len(all_ops)):
+            if prior_gate !=0 and all_ops[gate_idx].name == "u":
+                new_gate =  merge_single_qubit_gates(prior_gate, all_ops[gate_idx])
+            elif all_ops[gate_idx].name == "u":
+                prior_gate = all_ops[gate_idx]
+            else:
+                prior_gate = 0
+    return circuit
+
+
+
+
+
+
 class mock_simulate:
     """Run a circuit on Qiskit Aer's state-vector simulator.
 
