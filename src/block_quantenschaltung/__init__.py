@@ -340,12 +340,16 @@ def single_qubit_gate_fusion(circuit: qiskit.QuantumCircuit) -> qiskit.QuantumCi
         all_ops = operations_on_qubit(circuit, qubit)
         for gate_idx in range(len(all_ops)):
             if prior_gate !=0 and all_ops[gate_idx].name == "u":
-                new_gate =  merge_single_qubit_gates(prior_gate, all_ops[gate_idx])
+                prior_gate =  merge_single_qubit_gates(prior_gate, all_ops[gate_idx])
             elif all_ops[gate_idx].name == "u":
                 prior_gate = all_ops[gate_idx]
             else:
-                prior_gate = 0
-    return circuit
+                elif prior_gate != 0:
+                    new_circuit.append(prior_gate) #appends prior (fused) single qubit gate
+                    prior_gate = 0
+                new_circuit.append(all_ops[gate_idx]) #appends CNOT gates, however it does so twice
+            
+    return new_circuit
 
 
 
