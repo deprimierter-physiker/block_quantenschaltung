@@ -313,10 +313,10 @@ def apply_CNOT_reshape(control: int, target: int, state_vector: StateVector) -> 
 
 
 #Gate fusion
-def operations_on_qubit(circuit, qubit_index) -> qiskit.QuantumCircuit:
+def operations_on_qubit(circuit, qubit_index) -> list:
     #get all operations on a particular qubit
     qubit = circuit.qubits[qubit_index]
-    all_operations = qiskit.QuantumCircuit(1)
+    all_operations = []
     for instruction in circuit.data:
         if qubit in instruction.qubits:
             all_operations.append(instruction)
@@ -335,8 +335,9 @@ def single_qubit_gate_fusion(circuit: qiskit.QuantumCircuit) -> qiskit.QuantumCi
     #perform fusion of all subsequent single qubit gates
     N = circuit.num_qubits
     new_circuit = qiskit.QuantumCircuit(N) 
-    prior_gate = 0
+    
     for qubit in range(N):
+        prior_gate = 0
         all_ops = operations_on_qubit(circuit, qubit)
         for gate_idx in range(len(all_ops)):
             if prior_gate !=0 and all_ops[gate_idx].name == "u":
@@ -344,14 +345,16 @@ def single_qubit_gate_fusion(circuit: qiskit.QuantumCircuit) -> qiskit.QuantumCi
             elif all_ops[gate_idx].name == "u":
                 prior_gate = all_ops[gate_idx]
             else:
-                elif prior_gate != 0:
+                if prior_gate != 0:
                     new_circuit.append(prior_gate) #appends prior (fused) single qubit gate
                     prior_gate = 0
                 new_circuit.append(all_ops[gate_idx]) #appends CNOT gates, however it does so twice
+            if gate_idx == len(all_ops) and prior_gate != 0:
+                new_circuit.append(prior_gate) #if we end on a u
             
     return new_circuit
 
-
+#Measurements machen probleme
 
 
 
