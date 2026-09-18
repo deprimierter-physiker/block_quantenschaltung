@@ -313,14 +313,13 @@ def apply_CNOT_reshape(control: int, target: int, state_vector: StateVector) -> 
 
 
 #Gate fusion
-def operations_on_qubit(circuit, qubit_index) -> list:
-    #get all operations on a particular qubit
+def operations_on_qubit(circuit, qubit_index):
     qubit = circuit.qubits[qubit_index]
-    all_operations = []
-    for instruction in circuit.data:
-        if qubit in instruction.qubits:
-            all_operations.append(instruction)
-    return all_operations
+    return [
+        (index, instruction)
+        for index, instruction in enumerate(circuit.data)
+        if qubit in instruction.qubits
+    ]
 
 def merge_single_qubit_gates(gate1: qiskit.QuantumCircuit.data, gate2: qiskit.QuantumCircuit.data) -> qiskit.QuantumCircuit.data:
     #merge two subsequent single qubit gates
@@ -335,22 +334,40 @@ def single_qubit_gate_fusion(circuit: qiskit.QuantumCircuit) -> qiskit.QuantumCi
     #perform fusion of all subsequent single qubit gates
     N = circuit.num_qubits
     new_circuit = qiskit.QuantumCircuit(N) 
+    output_operations = []
     
     for qubit in range(N):
-        prior_gate = 0
+        prior_gate = None
+        prior_position = None #Position of the last gate
         all_ops = operations_on_qubit(circuit, qubit)
-        for gate_idx in range(len(all_ops)):
-            if prior_gate !=0 and all_ops[gate_idx].name == "u":
-                prior_gate =  merge_single_qubit_gates(prior_gate, all_ops[gate_idx])
-            elif all_ops[gate_idx].name == "u":
-                prior_gate = all_ops[gate_idx]
-            else:
-                if prior_gate != 0:
-                    new_circuit.append(prior_gate) #appends prior (fused) single qubit gate
-                    prior_gate = 0
-                new_circuit.append(all_ops[gate_idx]) #appends CNOT gates, however it does so twice
-            if gate_idx == len(all_ops) and prior_gate != 0:
-                new_circuit.append(prior_gate) #if we end on a u
+        for gate_idx, (position, instruction) in enumerate(all_ops):
+            operation = instruction.operation
+            if operation.name == "u" and prior_gate!= None or operation.name == "unitary" and prior_gate!= None:
+                prior_gate = merge_single_qubit_gates(
+                                                        prior_gate,
+                                                        operation,
+                                                    )
+                prior_position = position
+            elif operation.name == "u":
+                prior_gate = operation
+                prior_position = position
+            elif operation.name == "cx":
+                if prior_gate != None:
+                    output_operations.append((prior_position, prior_gate, [qubit]))
+                    prior_gate = None
+                if instruction.qubits[0] == circuit.qubits[qubit]:
+                    target_index = circuit.find_bit(
+                        instruction.qubits[1]
+                    ).index
+                    output_operations.append(
+                        (position, operation, [qubit, target_index])
+                    )
+            if gate_idx == len(all_ops)-1 and prior_gate != None:
+                output_operations.append((prior_position, prior_gate, [qubit]))
+
+    output_operations.sort(key=lambda item: item[0])
+    for _, operation, qubits in output_operations:
+        new_circuit.append(operation, qubits)
             
     return new_circuit
 
