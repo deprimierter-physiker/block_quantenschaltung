@@ -24,9 +24,7 @@ author = 'Pascal and Marius'
 extensions = ['sphinx.ext.autosummary','sphinx.ext.napoleon']
 
 # -- autosummary / autodoc ---------------------------------------------------
-# autosummary_generate makes Sphinx write the per-object stub pages into
-# docs/_autosummary (already listed in .gitignore) instead of requiring them by hand.
-autosummary_generate = True
+autosummary_generate = False
 autodoc_member_order = 'bysource'
 autodoc_typehints = 'description'   # render the annotations into the parameter list
 add_module_names = False
@@ -39,7 +37,7 @@ napoleon_use_param = True
 napoleon_use_rtype = True
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', '_autosummary', 'Thumbs.db', '.DS_Store']
 
 
 

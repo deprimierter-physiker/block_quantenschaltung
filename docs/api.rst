@@ -3,14 +3,52 @@ API Reference
 
 .. currentmodule:: block_quantenschaltung
 
-.. autosummary::
-   :toctree: _autosummary/
+``qs.apply_U``
+---------------
 
-   apply_U
-   apply_CNOT_clean
-   apply_CNOT_reshape
-   mock_simulate
-   simulate
-   own_simulator
-   simulate_no_einsum
-   own_simulator_no_einsum
+.. autofunction:: apply_U
+
+``qs.apply_CNOT_clean``
+-----------------------
+
+.. autofunction:: apply_CNOT_clean
+
+``qs.apply_CNOT_reshape``
+-------------------------
+
+.. autofunction:: apply_CNOT_reshape
+
+``qs.mock_simulate``
+--------------------
+
+.. autoclass:: mock_simulate
+   :no-index:
+   :members:
+
+``qs.simulate``
+---------------
+
+.. autoclass:: simulate
+   :no-index:
+   :members:
+
+``qs.own_simulator``
+--------------------
+
+.. autoclass:: own_simulator
+   :no-index:
+   :members:
+
+``qs.simulate_no_einsum``
+-------------------------
+
+.. autoclass:: simulate_no_einsum
+   :no-index:
+   :members:
+
+``qs.own_simulator_no_einsum``
+-------------------------------
+
+.. autoclass:: own_simulator_no_einsum
+   :no-index:
+   :members:
