@@ -13,4 +13,13 @@ pip install git+https://github.com/deprimierter-physiker/block_quantenschaltung
 
 This work was supported by claude and copilot.
 
+## Benchmarks
+
+The individual gate kernels, timed against each other:
+
 ![Runtime comparison between single qubit and CNOT gates.](docs/images/gate_benchmark_dark.png)
+
+And the same three back ends on complete random circuits, which is the more practical
+question of which one you would actually run:
+
+![Runtime of a full circuit simulation per back end, and their slowdown relative to Qiskit Aer.](docs/images/circuit_benchmark_dark.png)
