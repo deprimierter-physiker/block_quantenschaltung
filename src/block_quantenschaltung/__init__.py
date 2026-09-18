@@ -323,7 +323,7 @@ def operations_on_qubit(circuit, qubit_index):
 
 def merge_single_qubit_gates(gate1: qiskit.QuantumCircuit.data, gate2: qiskit.QuantumCircuit.data) -> qiskit.QuantumCircuit.data:
     #merge two subsequent single qubit gates
-    combined = qiskit.quantum_info.Operator(gate2).compose(qiskit.quantum_info.Operator(gate1))
+    combined = qiskit.quantum_info.Operator(gate1).compose(qiskit.quantum_info.Operator(gate2))
     fused_gate = qiskit.circuit.library.UnitaryGate(
     combined.data,
     label="u",
