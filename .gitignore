@@ -4,4 +4,3 @@ __pycache__/
 uv.lock
 _build/
 _autosummary/
-README.md
