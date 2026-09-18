@@ -335,8 +335,8 @@ def single_qubit_gate_fusion(circuit: qiskit.QuantumCircuit) -> qiskit.QuantumCi
     #perform fusion of all subsequent single qubit gates
     N = circuit.num_qubits
     new_circuit = qiskit.QuantumCircuit(N) 
-    prior_gate = 0
     for qubit in range(N):
+        prior_gate = 0
         all_ops = operations_on_qubit(circuit, qubit)
         for gate_idx in range(len(all_ops)):
             if prior_gate !=0 and all_ops[gate_idx].name == "u":
